@@ -36,11 +36,13 @@ sub register {
     my $base = shift;
     my $sections = shift;
     my $text = shift;
+    say qq(<!DOCTYPE html>\n<html lang="en-US">\n<head><title></title></head><body>\n);
     say $app->ua->get($base)->res->dom->find($text);
     $app->ua->get($base)->res->dom->find($_)->attr("href")->map(sub { s!^#!$base/!g;s!-!/!g;$_ })->each(sub{
       warn "$_\n";
       say $app->ua->get($_)->res->dom->find($text)
     }) foreach @$sections;
+    say qq(</body></html>);
   });
 
   $app->helper(pod_to_html => sub { shift; b(_pod_to_html(@_)) });
