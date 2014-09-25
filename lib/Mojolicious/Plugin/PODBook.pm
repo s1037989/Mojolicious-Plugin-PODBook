@@ -36,6 +36,7 @@ sub register {
     my $base = shift;
     my $sections = shift;
     my $text = shift;
+    say $app->ua->get($base)->res->dom->find($text);
     $app->ua->get($base)->res->dom->find($_)->attr("href")->map(sub { s!^#!$base/!g;s!-!/!g;$_ })->each(sub{
       warn "$_\n";
       say $app->ua->get($_)->res->dom->find($text)
