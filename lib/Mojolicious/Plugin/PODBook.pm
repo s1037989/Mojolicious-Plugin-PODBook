@@ -35,7 +35,7 @@ sub register {
 
   # Perldoc browser
   return undef if $conf->{no_perldoc};
-  my $defaults = {module => 'Mojolicious/Guides', format => 'html'};
+  my $defaults = {conf => $conf, module => 'Mojolicious/Guides', format => 'html'};
   $app->routes->any('/podbook' => $defaults => \&_podbook);
   return $app->routes->any(
     '/perldoc/:module' => $defaults => [module => qr/[^.]+/] => \&_perldoc);
@@ -43,7 +43,7 @@ sub register {
 
 sub _podbook {
   my $app = shift;
-  my $conf = {sections => ["h1#GUIDES + dl dt > a[href]", "h1#REFERENCE + p + ul li > p > a[href]"], text => "div#wrapperlicious"};
+  my $conf = $app->param('conf');
   my $podbook;
   $podbook .= qq(<!DOCTYPE html>\n<html lang="en-US">\n<head><title></title></head><body>\n);
   $podbook .= $app->ua->get('/perldoc')->res->dom->find($conf->{text});
