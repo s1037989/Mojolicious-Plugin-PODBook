@@ -31,27 +31,28 @@ sub register {
     }
   );
 
-  $app->helper(podbook => sub {
-    my $app = shift;
-    my $base = shift;
-    my $sections = shift;
-    my $text = shift;
-    say qq(<!DOCTYPE html>\n<html lang="en-US">\n<head><title></title></head><body>\n);
-    say $app->ua->get($base)->res->dom->find($text);
-    $app->ua->get($base)->res->dom->find($_)->attr("href")->map(sub { s!^#!$base/!g;s!-!/!g;$_ })->each(sub{
-      warn "$_\n";
-      say $app->ua->get($_)->res->dom->find($text)
-    }) foreach @$sections;
-    say qq(</body></html>);
-  });
-
   $app->helper(pod_to_html => sub { shift; b(_pod_to_html(@_)) });
 
   # Perldoc browser
   return undef if $conf->{no_perldoc};
   my $defaults = {module => 'Mojolicious/Guides', format => 'html'};
+  $app->routes->any('/podbook' => $defaults => \&_podbook);
   return $app->routes->any(
     '/perldoc/:module' => $defaults => [module => qr/[^.]+/] => \&_perldoc);
+}
+
+sub _podbook {
+  my $app = shift;
+  my $conf = {sections => ["h1#GUIDES + dl dt > a[href]", "h1#REFERENCE + p + ul li > p > a[href]"], text => "div#wrapperlicious"};
+  my $podbook;
+  $podbook .= qq(<!DOCTYPE html>\n<html lang="en-US">\n<head><title></title></head><body>\n);
+  $podbook .= $app->ua->get('/perldoc')->res->dom->find($conf->{text});
+  $app->ua->get('/perldoc')->res->dom->find($_)->attr("href")->map(sub { s!^#!/perldoc/!g;s!-!/!g;$_ })->each(sub{
+    warn "$_\n";
+    $podbook .= $app->ua->get($_)->res->dom->find($conf->{text})
+  }) foreach @{$conf->{sections}};
+  $podbook .= qq(</body></html>);
+  $app->render(text => $podbook);
 }
 
 sub _html {
